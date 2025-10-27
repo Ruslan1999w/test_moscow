@@ -4,22 +4,45 @@
     <n-data-table
         :columns="columns"
         :data="data"
-        :bordered="true"
-        :single-line="false"
+        :bordered=true
+        :single-line=false
+        :pagination="pagination"
+        :row-props="getRowProps"
         size="medium"
     />
   </div>
 </template>
 
 <script setup lang="ts">
+import { h, ref } from 'vue'
 import {
   NDataTable,
   NSwitch,
   NDatePicker,
-  NInputNumber,
-  useMessage
+  NInputNumber
 } from 'naive-ui'
-import { h, ref } from 'vue'
+import type { DataTableProps } from 'naive-ui'
+
+import { mockSteData } from "../../mocks/steData.mock.ts";
+
+function getRowProps(row: SteItem) {
+  return {
+    style: {
+      backgroundColor: row.isActual ? 'transparent' : '#f9f9f9',
+      color: row.isActual ? 'inherit' : '#999',
+      fontStyle: row.isActual ? 'normal' : 'italic',
+      opacity: row.isActual ? '1' : '0.7'
+    }
+  }
+}
+
+const pagination: DataTableProps['pagination'] = {
+  pageSize: 5,
+  showQuickJumper: true,
+  onChange: (page: number) => {
+    console.log('Page:', page)
+  }
+}
 
 interface SteItem {
   id: number
@@ -42,64 +65,20 @@ function normalizeTableData(rawData: Partial<SteItem>[]): SteItem[] {
     const price = priceNotNds + (priceNotNds * nds) / 100
 
     return {
-      id: typeof item.id === 'number' && !isNaN(item.id) ? item.id : Math.random(),
-
-      steName: typeof item.steName === 'string' && item.steName.trim() !== ''
-          ? item.steName.trim()
-          : '---',
-
-      isActual: Boolean(item.isActual)
-          ? item.isActual
-          : false,
-
-      priceEndDate:
-          typeof item.priceEndDate === 'number' && !isNaN(item.priceEndDate)
-              ? item.priceEndDate
-              : null,
+      id: typeof item.id === 'number' && !isNaN(item.id) ? item.id : Math.random(), // возможны дубли, временное решение
+      steName: typeof item.steName === 'string' && item.steName.trim() !== '' ? item.steName.trim() : '---',
+      priceEndDate: typeof item.priceEndDate === 'number' && !isNaN(item.priceEndDate) ? item.priceEndDate : null,
+      fillEndDate: typeof item.fillEndDate === 'number' && !isNaN(item.fillEndDate) ? item.fillEndDate : null,
+      isActual: Boolean(item.isActual) ? item.isActual : false,
 
       priceNotNds,
       nds,
       price,
-
-      fillEndDate:
-          typeof item.fillEndDate === 'number' && !isNaN(item.fillEndDate)
-              ? item.fillEndDate
-              : null
     }
   })
 }
 
-const rawTestData = [
-  {
-    id: 1,
-    steName: 'СТЕ-001',
-    isActual: true,
-    priceEndDate: Date.now() + 86400000 * 30,
-    priceNotNds: 1000,
-    nds: 20,
-    fillEndDate: Date.now()
-  },
-  {
-    id: 2,
-    steName: 'СТЕ-002',
-    isActual: false,
-    priceEndDate: Date.now() + 86400000 * 15,
-    priceNotNds: 2500,
-    nds: 10,
-    fillEndDate: null
-  },
-  {
-    id: 3,
-    steName: 'СТЕ-003',
-    isActual: true,
-    priceEndDate: Date.now() + 86400000 * 60,
-    priceNotNds: 500,
-    nds: 20,
-    fillEndDate: Date.now() + 86400000
-  }
-]
-
-const data = ref<SteItem[]>(normalizeTableData(rawTestData))
+const data = ref<SteItem[]>(normalizeTableData(mockSteData))
 
 function handleCellUpdate(id: number, field: keyof SteItem, value: unknown) {
   const item = data.value.find(row => row.id === id)
@@ -132,7 +111,8 @@ function createColumns(): DataTableColumns<SteItem> {
     {
       key: 'isActual',
       title: 'Актуально',
-      render: (row: SteItem) =>
+      sorter: (a: SteItem, b: SteItem) => Number(b.isActual) - Number(a.isActual),
+      render: (row) =>
           h(NSwitch, {
             value: row.isActual,
             onUpdateValue: (value: boolean) => handleCellUpdate(row.id, 'isActual', value)
@@ -182,7 +162,6 @@ function createColumns(): DataTableColumns<SteItem> {
     {
       key: 'price',
       title: 'Цена, руб. с НДС',
-      // Только для чтения, рассчитывается автоматически
       render: (row: SteItem) =>
           h('div', {
             style: 'font-weight: 500; color: #2c3e50;'
@@ -191,17 +170,16 @@ function createColumns(): DataTableColumns<SteItem> {
     {
       key: 'fillEndDate',
       title: 'Срок заполнения',
-      render: (row: SteItem) =>
-          h(NDatePicker, {
-            type: 'date',
-            value: row.fillEndDate,
-            onUpdateValue: (value: number | null) => handleCellUpdate(row.id, 'fillEndDate', value),
-            style: 'width: 100%'
-          })
+      render: (row: SteItem) => {
+        if (!row.fillEndDate) return h('span', { style: 'color: #999;' }, '—')
+
+        const date = new Date(row.fillEndDate)
+        const formatted = date.toLocaleDateString('ru-RU')
+        return h('span', {}, formatted)
+      }
     }
   ]
 }
 
 const columns = createColumns()
-const message = useMessage()
 </script>
