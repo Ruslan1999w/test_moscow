@@ -1,5 +1,60 @@
-# Vue 3 + TypeScript + Vite
+# STE Price Table Application
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+## О приложении
 
-Learn more about the recommended Project Setup and IDE Support in the [Vue Docs TypeScript Guide](https://vuejs.org/guide/typescript/overview.html#project-setup).
+Это приложение представляет собой интерактивную таблицу для управления ценами на СТЕ (средства технического обеспечения) с возможностью редактирования данных в реальном времени. Приложение построено на Vue 3 с использованием Composition API и библиотеки компонентов Naive UI.
+
+## Функционал
+
+Отображение таблицы с данными о СТЕ
+
+Редактируемые поля:
+- isActual (n-switch)
+- priceEndDate (n-date-picker)
+- priceNotNds (n-input-number)
+- nds (n-input-number)
+
+Автоматический пересчёт цены с НДС по формуле:  
+price = priceNotNds + (priceNotNds * nds / 100)
+
+Поддержка локализации: переключение между русским и английским языком
+
+Автоматическое определение языка браузера при первом заходе
+
+Логирование изменений строки в консоль с текущим состоянием (id, isActual, price, priceNotNds, nds, priceEndDate)
+
+Визуальное выделение неактуальных строк (затемнённый текст)
+
+Пагинация: 5 строк на странице с возможностью быстрого перехода
+
+## Технологии
+
+- Vue 3 (Composition API)
+- TypeScript
+- Naive UI
+- Vite
+
+## Как запустить приложение
+
+Убедитесь, что у вас установлен Node.js версии 16 или выше.
+
+Клонируйте репозиторий
+```git clone https://github.com/Ruslan1999w/test_moscow.git```
+
+Установка зависимостей
+``` npm install```
+
+Запуск в режиме разработки  
+```npm run dev```
+
+## Особенности реализации
+
+Данные нормализуются при загрузке: проверяются на валидность числовые значения, строки очищаются от пробелов
+
+Для строк без ID генерируется временный отрицательный ID
+
+Ставка НДС ограничена диапазоном от 0 до 100%
+
+Все изменения строки сохраняются немедленно и выводятся в консоль
+
+Поддерживается корректное форматирование дат и цен
